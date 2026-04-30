@@ -1,65 +1,76 @@
-import { useState } from "react";
-import reactLogo from "./assets/react.svg";
-import viteLogo from "./assets/vite.svg";
-import heroImg from "./assets/hero.png";
-import "./App.css";
+import axios from "axios";
+import { useEffect, useState } from "react";
+import Movies from "./components/Movies";
+import Pagination from "./components/Pagination";
+import Search from "./components/Search";
+
+let API_KEY = "dcea1fd7b3e65d34387ad6de7ef9cc5e";
 
 function App() {
-  const [count, setCount] = useState(0);
+  const [action, setAction] = useState("top_rated");
+  const [movies, setMovies] = useState([]);
+  const [page, setPage] = useState(1);
+  const [title, setTitle] = useState("");
+
+  useEffect(() => {
+    const apiUrl = `https://api.themoviedb.org/3/movie/${action}?api_key=${API_KEY}&page=${page}`;
+
+    async function fetchApi() {
+      const data = await axios.get(apiUrl);
+      if (!title) {
+        setMovies(data.data.results);
+      } else {
+        setMovies(
+          data.data.results.filter((movie) =>
+            movie.title.toLowerCase().includes(title.toLowerCase()),
+          ),
+        );
+      }
+    }
+
+    fetchApi();
+  }, [action, page, title]);
+
+  function checkedAction(checkedAction) {
+    window.localStorage.setItem("action", checkedAction);
+    setAction(checkedAction);
+    setPage(1);
+  }
 
   return (
     <div>
       <div class="header-inner">
         <div class="container rel">
           <div class="row2">
-            <button value="top_rated" class="btns">
+            <button
+              onClick={() => checkedAction("top_rated")}
+              value="top_rated"
+              class="btns"
+            >
               Top kinolar
             </button>
-            <button value="popular" class="btns">
+            <button
+              onClick={() => checkedAction("popular")}
+              value="popular"
+              class="btns"
+            >
               popular
             </button>
-            <button value="upcoming" class="btns">
+            <button
+              onClick={() => checkedAction("upcoming")}
+              value="upcoming"
+              class="btns"
+            >
               upcoming
             </button>
           </div>
-          <div class="fl">
-            <div class="row1">
-              <input type="text" placeholder="search" id="search" />
-            </div>
-            <div class="row1">
-              <input type="number" placeholder="min" id="min" />
-              <input type="number" placeholder="max" id="max" />
-            </div>
-            <div class="row1">
-              <input type="number" placeholder="score" id="score" />
-            </div>
-            <button class="btn" type="button">
-              button
-            </button>
-          </div>
+          <Search setTitle={setTitle} />
         </div>
       </div>
 
       <div class="container">
-        <div class="append">
-          <div class="movie">
-            <img
-              src="https://image.tmdb.org/t/p/w500/qRyy2UmjC5ur9bDi3kpNNRCc5nc.jpg"
-              alt="Fast &amp; Furious Presents: Hobbs &amp; Shaw"
-            />
-
-            <div class="movie-info">
-              <h3>Fast &amp; Furious Presents: Hobbs &amp; Shaw</h3>
-              <span class="orange">6.9</span>
-            </div>
-            <span class="date">2021-09-21</span>
-          </div>
-        </div>
-        <div class="pn">
-          <button class="prev">prev</button>
-          <span class="title">1</span>
-          <button class="next">next</button>
-        </div>
+        <Movies movies={movies} />
+        <Pagination page={page} setPage={setPage} />
       </div>
     </div>
   );

@@ -120,6 +120,7 @@ input::placeholder { /* Chrome, Firefox, Opera, Safari 10.1+ */
     font-size: 17px;
     position: absolute;
     right: -130px;
+    cursor: pointer;
 }
 .header-inner{
     background-color: #373b69;
@@ -141,6 +142,7 @@ input::placeholder { /* Chrome, Firefox, Opera, Safari 10.1+ */
     color: orange;
     font-size: 17px;
     margin-bottom: 20px;
+    cursor: pointer;
 }
 .prev , .next{
     padding: 8px 18px;
