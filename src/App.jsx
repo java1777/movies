@@ -11,6 +11,7 @@ function App() {
   const [movies, setMovies] = useState([]);
   const [page, setPage] = useState(1);
   const [title, setTitle] = useState("");
+  const [score, setScore] = useState(0);
 
   useEffect(() => {
     const apiUrl = `https://api.themoviedb.org/3/movie/${action}?api_key=${API_KEY}&page=${page}`;
@@ -19,17 +20,28 @@ function App() {
       const data = await axios.get(apiUrl);
       if (!title) {
         setMovies(data.data.results);
-      } else {
+      }
+
+      if (title) {
         setMovies(
           data.data.results.filter((movie) =>
             movie.title.toLowerCase().includes(title.toLowerCase()),
           ),
         );
       }
+
+      if (score) {
+        setMovies(
+          movies.filter(
+            (movie) =>
+              movie.vote_average >= +score && movie.vote_average < +score + 1,
+          ),
+        );
+      }
     }
 
     fetchApi();
-  }, [action, page, title]);
+  }, [movies, action, page, title, score]);
 
   function checkedAction(checkedAction) {
     window.localStorage.setItem("action", checkedAction);
@@ -64,7 +76,13 @@ function App() {
               upcoming
             </button>
           </div>
-          <Search setTitle={setTitle} />
+          <Search
+            setTitle={setTitle}
+            setScore={setScore}
+            score={score}
+            movies={movies}
+            setMovies={setMovies}
+          />
         </div>
       </div>
 

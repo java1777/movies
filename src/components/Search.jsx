@@ -1,4 +1,8 @@
-export default function Search({ setTitle }) {
+export default function Search({
+  setTitle,
+
+  setScore,
+}) {
   return (
     <div class="fl">
       <div class="row1">
@@ -14,7 +18,12 @@ export default function Search({ setTitle }) {
         <input type="number" placeholder="max" id="max" />
       </div>
       <div class="row1">
-        <input type="number" placeholder="score" id="score" />
+        <input
+          onChange={(e) => setScore(e.target.value)}
+          type="number"
+          placeholder="score"
+          id="score"
+        />
       </div>
       <button class="btn" type="button">
         button
