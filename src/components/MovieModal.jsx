@@ -17,6 +17,8 @@ export default function MovieModal({ movieId, onClose, saved }) {
   useEffect(() => {
     const controller = new AbortController();
 
+    const langShort = tmdbLang.split("-")[0];
+
     async function fetchDetails() {
       setLoading(true);
       setError("");
@@ -26,19 +28,40 @@ export default function MovieModal({ movieId, onClose, saved }) {
             api_key: API_KEY,
             append_to_response: "videos",
             language: tmdbLang,
+            // Include English videos too — many languages (e.g. uz) have none
+            include_video_language: `${langShort},en`,
           },
           signal: controller.signal,
         });
-        setDetails(data);
 
-        const trailer = data.videos?.results.find(
-          (v) => v.site === "YouTube" && v.type === "Trailer",
-        );
-        // Fall back to any YouTube video if no official trailer
-        const fallback = data.videos?.results.find(
-          (v) => v.site === "YouTube",
-        );
-        setTrailerKey(trailer?.key || fallback?.key || "");
+        // TMDB often lacks overviews for some languages (e.g. uz) — fall
+        // back to the English overview so the description is never empty.
+        let overview = data.overview;
+        if (!overview) {
+          const { data: en } = await axios.get(
+            `${BASE_URL}/movie/${movieId}`,
+            {
+              params: { api_key: API_KEY, language: "en-US" },
+              signal: controller.signal,
+            },
+          );
+          overview = en.overview;
+        }
+        setDetails({ ...data, overview });
+
+        const videos = data.videos?.results || [];
+        const trailer =
+          // Prefer a trailer in the selected language, then any trailer,
+          // then any YouTube video at all.
+          videos.find(
+            (v) =>
+              v.site === "YouTube" &&
+              v.type === "Trailer" &&
+              v.iso_639_1 === langShort,
+          ) ||
+          videos.find((v) => v.site === "YouTube" && v.type === "Trailer") ||
+          videos.find((v) => v.site === "YouTube");
+        setTrailerKey(trailer?.key || "");
       } catch (err) {
         if (!axios.isCancel(err)) {
           setError(t("detailsError"));
