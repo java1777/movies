@@ -45,7 +45,13 @@ body {
   position: sticky;
   top: 0;
   z-index: 10;
-  transition: background-color 0.3s ease;
+  transition: transform 0.3s ease, background-color 0.3s ease;
+  will-change: transform;
+}
+
+/* Auto-hide when scrolling down (revealed on scroll up) */
+.header-inner.header-hidden {
+  transform: translateY(-100%);
 }
 
 .topbar {
@@ -171,7 +177,8 @@ input[type="number"]::-webkit-outer-spin-button {
 /* ---------- Movies grid ---------- */
 .append {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  /* min(100%, 240px) prevents overflow on very narrow screens */
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 240px), 1fr));
   gap: 24px;
   margin-top: 32px;
 }
@@ -318,6 +325,64 @@ input[type="number"]::-webkit-outer-spin-button {
 
 .status.error {
   color: #ff6b6b;
+}
+
+.link-btn {
+  background: none;
+  border: none;
+  color: var(--accent);
+  font: inherit;
+  font-weight: 600;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+/* Dim the grid slightly while a background refetch is in flight */
+.dimmed {
+  opacity: 0.6;
+  transition: opacity 0.2s ease;
+  pointer-events: none;
+}
+
+/* ---------- Skeleton loader ---------- */
+.movie.skeleton {
+  cursor: default;
+}
+
+.skeleton-poster {
+  width: 100%;
+  aspect-ratio: 2 / 3;
+  background: linear-gradient(
+    90deg,
+    var(--card) 25%,
+    rgb(255 255 255 / 8%) 50%,
+    var(--card) 75%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.4s infinite;
+}
+
+.skeleton-line {
+  height: 14px;
+  width: 70%;
+  border-radius: 4px;
+  background: linear-gradient(
+    90deg,
+    var(--bg) 25%,
+    rgb(255 255 255 / 8%) 50%,
+    var(--bg) 75%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.4s infinite;
+}
+
+@keyframes shimmer {
+  from {
+    background-position: 200% 0;
+  }
+  to {
+    background-position: -200% 0;
+  }
 }
 
 /* ---------- Pagination ---------- */
@@ -556,18 +621,60 @@ input[type="number"]::-webkit-outer-spin-button {
 }
 
 /* ---------- Responsive ---------- */
-@media (max-width: 640px) {
-  .rel {
+@media (max-width: 768px) {
+  .topbar {
     flex-direction: column;
     align-items: stretch;
   }
+  .settings {
+    justify-content: flex-end;
+  }
+  .fl {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .row1 {
+    width: 100%;
+  }
   #search {
-    min-width: 100%;
+    width: 100%;
+  }
+  #min,
+  #max {
     flex: 1;
+  }
+}
+
+@media (max-width: 640px) {
+  .append {
+    gap: 16px;
+    margin-top: 20px;
+  }
+  .header-inner {
+    padding: 16px 0;
+  }
+  .btns {
+    font-size: 14px;
+    padding: 7px 14px;
+  }
+  .modal-overlay {
+    padding: 0;
+  }
+  .modal {
+    border-radius: 0;
+    min-height: 100vh;
   }
   .modal-header {
     flex-direction: column;
     align-items: center;
     text-align: center;
+  }
+  .modal-poster {
+    width: 120px;
+  }
+  .chips,
+  .genres,
+  .modal-actions {
+    justify-content: center;
   }
 }

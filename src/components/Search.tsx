@@ -1,4 +1,13 @@
-import { useSettings } from "../context/SettingsContext";
+import { useSettings } from "../hooks/useSettings";
+
+interface Props {
+  title: string;
+  setTitle: (v: string) => void;
+  minScore: string;
+  setMinScore: (v: string) => void;
+  maxScore: string;
+  setMaxScore: (v: string) => void;
+}
 
 export default function Search({
   title,
@@ -7,7 +16,7 @@ export default function Search({
   setMinScore,
   maxScore,
   setMaxScore,
-}) {
+}: Props) {
   const { t } = useSettings();
 
   return (
@@ -18,6 +27,7 @@ export default function Search({
           onChange={(e) => setTitle(e.target.value)}
           type="text"
           placeholder={t("searchPlaceholder")}
+          aria-label={t("searchPlaceholder")}
           id="search"
         />
       </div>
@@ -29,6 +39,7 @@ export default function Search({
           min="0"
           max="10"
           placeholder={t("minRating")}
+          aria-label={t("minRating")}
           id="min"
         />
         <input
@@ -38,6 +49,7 @@ export default function Search({
           min="0"
           max="10"
           placeholder={t("maxRating")}
+          aria-label={t("maxRating")}
           id="max"
         />
       </div>

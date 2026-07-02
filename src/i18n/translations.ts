@@ -2,16 +2,45 @@ export const LANGUAGES = [
   { code: "uz", label: "O'zbekcha", short: "UZ" },
   { code: "ru", label: "Русский", short: "RU" },
   { code: "en", label: "English", short: "EN" },
-];
+] as const;
 
-// TMDB API language codes — movie titles/overviews come back localized
-export const TMDB_LANG = {
+export type Lang = (typeof LANGUAGES)[number]["code"];
+
+export const TMDB_LANG: Record<Lang, string> = {
   uz: "uz-UZ",
   ru: "ru-RU",
   en: "en-US",
 };
 
-export const translations = {
+export type TranslationKey =
+  | "topRated"
+  | "popular"
+  | "upcoming"
+  | "favorites"
+  | "watchLater"
+  | "searchPlaceholder"
+  | "minRating"
+  | "maxRating"
+  | "loading"
+  | "fetchError"
+  | "noMovies"
+  | "noFavorites"
+  | "noWatchlist"
+  | "description"
+  | "noInfo"
+  | "prev"
+  | "next"
+  | "trailer"
+  | "noTrailer"
+  | "detailsError"
+  | "liked"
+  | "like"
+  | "inWatchlist"
+  | "addWatchLater"
+  | "minutes"
+  | "retry";
+
+export const translations: Record<Lang, Record<TranslationKey, string>> = {
   uz: {
     topRated: "Top reyting",
     popular: "Ommabop",
@@ -22,7 +51,7 @@ export const translations = {
     minRating: "Min reyting",
     maxRating: "Max reyting",
     loading: "Yuklanmoqda...",
-    fetchError: "Kinolarni yuklashda xatolik yuz berdi. Qayta urinib ko'ring.",
+    fetchError: "Kinolarni yuklashda xatolik yuz berdi.",
     noMovies: "Hech qanday kino topilmadi.",
     noFavorites: "Hali sevimli kinolar yo'q. Kinolarni ❤️ bilan belgilang.",
     noWatchlist: "Ro'yxat bo'sh. Kinolarni 🏷️ bilan keyinroq ko'rishga qo'shing.",
@@ -38,6 +67,7 @@ export const translations = {
     inWatchlist: "Ro'yxatda",
     addWatchLater: "Keyinroq ko'rish",
     minutes: "min",
+    retry: "Qayta urinish",
   },
   ru: {
     topRated: "Топ рейтинг",
@@ -49,10 +79,11 @@ export const translations = {
     minRating: "Мин рейтинг",
     maxRating: "Макс рейтинг",
     loading: "Загрузка...",
-    fetchError: "Ошибка при загрузке фильмов. Попробуйте снова.",
+    fetchError: "Ошибка при загрузке фильмов.",
     noMovies: "Фильмы не найдены.",
     noFavorites: "Пока нет избранных фильмов. Отмечайте фильмы значком ❤️.",
-    noWatchlist: "Список пуст. Добавляйте фильмы значком 🏷️, чтобы посмотреть позже.",
+    noWatchlist:
+      "Список пуст. Добавляйте фильмы значком 🏷️, чтобы посмотреть позже.",
     description: "Описание",
     noInfo: "Информация отсутствует.",
     prev: "Назад",
@@ -65,6 +96,7 @@ export const translations = {
     inWatchlist: "В списке",
     addWatchLater: "Посмотреть позже",
     minutes: "мин",
+    retry: "Повторить",
   },
   en: {
     topRated: "Top Rated",
@@ -76,7 +108,7 @@ export const translations = {
     minRating: "Min rating",
     maxRating: "Max rating",
     loading: "Loading...",
-    fetchError: "Failed to load movies. Please try again.",
+    fetchError: "Failed to load movies.",
     noMovies: "No movies found.",
     noFavorites: "No favorite movies yet. Mark movies with ❤️.",
     noWatchlist: "Your list is empty. Add movies with 🏷️ to watch later.",
@@ -92,5 +124,6 @@ export const translations = {
     inWatchlist: "In list",
     addWatchLater: "Watch later",
     minutes: "min",
+    retry: "Retry",
   },
 };
