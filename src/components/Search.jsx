@@ -1,33 +1,46 @@
-export default function Search({
-  setTitle,
+import { useSettings } from "../context/SettingsContext";
 
-  setScore,
+export default function Search({
+  title,
+  setTitle,
+  minScore,
+  setMinScore,
+  maxScore,
+  setMaxScore,
 }) {
+  const { t } = useSettings();
+
   return (
-    <div class="fl">
-      <div class="row1">
+    <div className="fl">
+      <div className="row1">
         <input
+          value={title}
           onChange={(e) => setTitle(e.target.value)}
           type="text"
-          placeholder="search"
+          placeholder={t("searchPlaceholder")}
           id="search"
         />
       </div>
-      <div class="row1">
-        <input type="number" placeholder="min" id="min" />
-        <input type="number" placeholder="max" id="max" />
-      </div>
-      <div class="row1">
+      <div className="row1">
         <input
-          onChange={(e) => setScore(e.target.value)}
+          value={minScore}
+          onChange={(e) => setMinScore(e.target.value)}
           type="number"
-          placeholder="score"
-          id="score"
+          min="0"
+          max="10"
+          placeholder={t("minRating")}
+          id="min"
+        />
+        <input
+          value={maxScore}
+          onChange={(e) => setMaxScore(e.target.value)}
+          type="number"
+          min="0"
+          max="10"
+          placeholder={t("maxRating")}
+          id="max"
         />
       </div>
-      <button class="btn" type="button">
-        button
-      </button>
     </div>
   );
 }

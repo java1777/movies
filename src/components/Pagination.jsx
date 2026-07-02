@@ -1,17 +1,26 @@
-export default function Pagination({ page, setPage }) {
-  function prevCount() {
-    if (page > 1) {
-      setPage(page - 1);
-    }
+import { useSettings } from "../context/SettingsContext";
+
+export default function Pagination({ page, setPage, totalPages }) {
+  const { t } = useSettings();
+
+  function prev() {
+    if (page > 1) setPage(page - 1);
   }
+
+  function next() {
+    if (page < totalPages) setPage(page + 1);
+  }
+
   return (
-    <div class="pn">
-      <button onClick={prevCount} class="prev">
-        prev
+    <div className="pn">
+      <button onClick={prev} className="prev" disabled={page <= 1}>
+        ← {t("prev")}
       </button>
-      <span class="title">{page}</span>
-      <button onClick={() => setPage((prev) => prev + 1)} class="next">
-        next
+      <span className="title">
+        {page} / {totalPages}
+      </span>
+      <button onClick={next} className="next" disabled={page >= totalPages}>
+        {t("next")} →
       </button>
     </div>
   );

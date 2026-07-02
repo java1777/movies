@@ -1,95 +1,190 @@
 import axios from "axios";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Movies from "./components/Movies";
+import MovieModal from "./components/MovieModal";
 import Pagination from "./components/Pagination";
 import Search from "./components/Search";
+import { useSavedMovies } from "./hooks/useSavedMovies";
+import { useSettings } from "./context/SettingsContext";
+import { LANGUAGES } from "./i18n/translations";
 
-let API_KEY = "dcea1fd7b3e65d34387ad6de7ef9cc5e";
+const API_KEY = import.meta.env.VITE_TMDB_API_KEY;
+const BASE_URL = "https://api.themoviedb.org/3";
 
 function App() {
-  const [action, setAction] = useState("top_rated");
+  const { t, lang, setLang, theme, toggleTheme, tmdbLang } = useSettings();
+  const saved = useSavedMovies();
+
+  const CATEGORIES = [
+    { value: "top_rated", label: t("topRated") },
+    { value: "popular", label: t("popular") },
+    { value: "upcoming", label: t("upcoming") },
+  ];
+
+  const [category, setCategory] = useState(
+    () => window.localStorage.getItem("category") || "top_rated",
+  );
   const [movies, setMovies] = useState([]);
   const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
   const [title, setTitle] = useState("");
-  const [score, setScore] = useState(0);
+  const [minScore, setMinScore] = useState("");
+  const [maxScore, setMaxScore] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+  const [selectedId, setSelectedId] = useState(null);
+
+  const isSavedView = category === "liked" || category === "watchlist";
 
   useEffect(() => {
-    const apiUrl = `https://api.themoviedb.org/3/movie/${action}?api_key=${API_KEY}&page=${page}`;
+    if (isSavedView) return; // Saved lists come from localStorage, not the API
+    const controller = new AbortController();
 
-    async function fetchApi() {
-      const data = await axios.get(apiUrl);
-      if (!title) {
-        setMovies(data.data.results);
-      }
-
-      if (title) {
-        setMovies(
-          data.data.results.filter((movie) =>
-            movie.title.toLowerCase().includes(title.toLowerCase()),
-          ),
-        );
-      }
-
-      if (score) {
-        setMovies(
-          movies.filter(
-            (movie) =>
-              movie.vote_average >= +score && movie.vote_average < +score + 1,
-          ),
-        );
+    async function fetchMovies() {
+      setLoading(true);
+      setError("");
+      try {
+        const { data } = await axios.get(`${BASE_URL}/movie/${category}`, {
+          params: { api_key: API_KEY, page, language: tmdbLang },
+          signal: controller.signal,
+        });
+        setMovies(data.results);
+        setTotalPages(Math.min(data.total_pages, 500));
+      } catch (err) {
+        if (!axios.isCancel(err)) {
+          setError(t("fetchError"));
+        }
+      } finally {
+        setLoading(false);
       }
     }
 
-    fetchApi();
-  }, [movies, action, page, title, score]);
+    fetchMovies();
+    return () => controller.abort();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [category, page, isSavedView, tmdbLang]);
 
-  function checkedAction(checkedAction) {
-    window.localStorage.setItem("action", checkedAction);
-    setAction(checkedAction);
+  // Source list: API results, or a saved collection for the saved views
+  const sourceMovies = useMemo(() => {
+    if (category === "liked") return saved.liked;
+    if (category === "watchlist") return saved.watchlist;
+    return movies;
+  }, [category, movies, saved.liked, saved.watchlist]);
+
+  // Client-side filtering (title + score range)
+  const filteredMovies = useMemo(() => {
+    return sourceMovies.filter((movie) => {
+      const matchesTitle = movie.title
+        .toLowerCase()
+        .includes(title.toLowerCase());
+      const matchesMin = minScore ? movie.vote_average >= +minScore : true;
+      const matchesMax = maxScore ? movie.vote_average <= +maxScore : true;
+      return matchesTitle && matchesMin && matchesMax;
+    });
+  }, [sourceMovies, title, minScore, maxScore]);
+
+  function handleCategory(next) {
+    if (!(next === "liked" || next === "watchlist")) {
+      window.localStorage.setItem("category", next);
+    }
+    setCategory(next);
     setPage(1);
   }
 
+  const emptyMessage =
+    category === "liked"
+      ? t("noFavorites")
+      : category === "watchlist"
+        ? t("noWatchlist")
+        : t("noMovies");
+
   return (
     <div>
-      <div class="header-inner">
-        <div class="container rel">
-          <div class="row2">
+      <header className="header-inner">
+        <div className="container topbar">
+          <div className="row2">
+            {CATEGORIES.map((cat) => (
+              <button
+                key={cat.value}
+                onClick={() => handleCategory(cat.value)}
+                className={`btns ${category === cat.value ? "active" : ""}`}
+              >
+                {cat.label}
+              </button>
+            ))}
             <button
-              onClick={() => checkedAction("top_rated")}
-              value="top_rated"
-              class="btns"
+              onClick={() => handleCategory("liked")}
+              className={`btns ${category === "liked" ? "active" : ""}`}
             >
-              Top kinolar
+              ❤️ {t("favorites")} ({saved.liked.length})
             </button>
             <button
-              onClick={() => checkedAction("popular")}
-              value="popular"
-              class="btns"
+              onClick={() => handleCategory("watchlist")}
+              className={`btns ${category === "watchlist" ? "active" : ""}`}
             >
-              popular
-            </button>
-            <button
-              onClick={() => checkedAction("upcoming")}
-              value="upcoming"
-              class="btns"
-            >
-              upcoming
+              🔖 {t("watchLater")} ({saved.watchlist.length})
             </button>
           </div>
+
+          <div className="settings">
+            <select
+              className="lang-select"
+              value={lang}
+              onChange={(e) => setLang(e.target.value)}
+              aria-label="Language"
+            >
+              {LANGUAGES.map((l) => (
+                <option key={l.code} value={l.code}>
+                  {l.short}
+                </option>
+              ))}
+            </select>
+            <button
+              className="theme-btn"
+              onClick={toggleTheme}
+              title={theme === "dark" ? "Light mode" : "Dark mode"}
+            >
+              {theme === "dark" ? "☀️" : "🌙"}
+            </button>
+          </div>
+        </div>
+
+        <div className="container">
           <Search
+            title={title}
             setTitle={setTitle}
-            setScore={setScore}
-            score={score}
-            movies={movies}
-            setMovies={setMovies}
+            minScore={minScore}
+            setMinScore={setMinScore}
+            maxScore={maxScore}
+            setMaxScore={setMaxScore}
           />
         </div>
-      </div>
+      </header>
 
-      <div class="container">
-        <Movies movies={movies} />
-        <Pagination page={page} setPage={setPage} />
-      </div>
+      <main className="container">
+        {loading && <p className="status">{t("loading")}</p>}
+        {error && <p className="status error">{error}</p>}
+        {!loading && !error && filteredMovies.length === 0 && (
+          <p className="status">{emptyMessage}</p>
+        )}
+
+        <Movies
+          movies={filteredMovies}
+          onSelect={setSelectedId}
+          saved={saved}
+        />
+        {!isSavedView && (
+          <Pagination page={page} setPage={setPage} totalPages={totalPages} />
+        )}
+      </main>
+
+      {selectedId && (
+        <MovieModal
+          movieId={selectedId}
+          onClose={() => setSelectedId(null)}
+          saved={saved}
+        />
+      )}
     </div>
   );
 }
